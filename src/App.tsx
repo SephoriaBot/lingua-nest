@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
-import { turso } from './lib/turso';
+import { turso } from './lib/db/turso';
 import type { Language, LearningStyle, UserSettings } from './types';
 import StyleSelector from './components/StyleSelector';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import Flashcards from './components/Flashcards';
 import GrammarNotes from './components/GrammarNotes';
 import ConversationPractice from './components/ConversationPractice';
-
-// Swap this for your real Clerk user id (e.g. from useUser() in @clerk/clerk-react).
-const DEMO_USER_ID = 'demo-user';
+import { useUser } from '@clerk/clerk-react';
 
 type Mode = LearningStyle;
 
 export default function App() {
+  const { user, isLoaded } = useUser();
+  const userId = user?.id;
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('flashcards');
-
+if (!isLoaded) return null;
+if (!userId) return <SignInPrompt />; // or Clerk's <SignIn /> component
+  
   useEffect(() => {
     (async () => {
       const langsRes = await turso.execute('select * from languages order by sort_order');
@@ -25,7 +27,7 @@ export default function App() {
 
       const settingsRes = await turso.execute({
         sql: 'select * from user_settings where user_id = ?',
-        args: [DEMO_USER_ID],
+        args: [userId],
       });
       const row = settingsRes.rows[0] as any;
       if (row) {
@@ -47,10 +49,10 @@ export default function App() {
             on conflict(user_id) do update set
               learning_styles = excluded.learning_styles,
               updated_at = excluded.updated_at`,
-      args: [DEMO_USER_ID, activeLanguage, JSON.stringify(styles), new Date().toISOString()],
+      args: [userId, activeLanguage, JSON.stringify(styles), new Date().toISOString()],
     });
     setSettings({
-      user_id: DEMO_USER_ID,
+      user_id: userId,
       active_language_id: activeLanguage,
       learning_styles: styles,
       updated_at: new Date().toISOString(),
@@ -62,7 +64,7 @@ export default function App() {
     if (!settings) return;
     await turso.execute({
       sql: 'update user_settings set active_language_id = ? where user_id = ?',
-      args: [id, DEMO_USER_ID],
+      args: [id, userId],
     });
     setSettings({ ...settings, active_language_id: id });
   }
@@ -107,7 +109,7 @@ export default function App() {
           </div>
 
           {activeLanguage && mode === 'flashcards' && (
-            <Flashcards languageId={activeLanguage.id} userId={DEMO_USER_ID} />
+            <Flashcards languageId={activeLanguage.id} userId={userId} />
           )}
           {activeLanguage && mode === 'grammar' && <GrammarNotes languageId={activeLanguage.id} />}
           {activeLanguage && mode === 'conversation' && <ConversationPractice languageId={activeLanguage.id} />}
