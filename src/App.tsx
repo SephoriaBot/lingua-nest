@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useUser, SignInButton, UserButton } from '@clerk/clerk-react';
-import { turso } from './lib/turso';
+import { turso } from './lib/db/turso';
 import type { Language, LearningStyle, UserSettings } from './types';
 import StyleSelector from './components/StyleSelector';
 import LanguageSwitcher from './components/LanguageSwitcher';
