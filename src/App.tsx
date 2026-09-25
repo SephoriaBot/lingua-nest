@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
-import { turso } from './lib/db/turso';
+import { useUser, SignInButton, UserButton } from '@clerk/clerk-react';
+import { turso } from './lib/turso';
 import type { Language, LearningStyle, UserSettings } from './types';
 import StyleSelector from './components/StyleSelector';
 import LanguageSwitcher from './components/LanguageSwitcher';
@@ -73,15 +73,18 @@ export default function App() {
   // Wait for Clerk to finish checking the session before deciding what to show.
   if (!isLoaded) return null;
 
-  // Not signed in — swap this for Clerk's <SignIn /> component whenever you
-  // wire up a real sign-in page; a plain message is enough to unblock the build.
+  // Not signed in — Clerk's modal handles the actual form (email, password,
+  // socials, whatever you've enabled in the Clerk dashboard).
   if (!userId) {
     return (
       <div className="app-shell">
         <div className="brand">
           <span className="flag">🌿</span> Lingua Nest
         </div>
-        <p>Please sign in to continue.</p>
+        <p style={{ marginBottom: 16 }}>Sign in to start learning.</p>
+        <SignInButton mode="modal">
+          <button className="btn-primary">Sign in</button>
+        </SignInButton>
       </div>
     );
   }
@@ -92,10 +95,15 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <div className="brand">
-        <span className="flag">🌿</span> Lingua Nest
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div className="brand">
+            <span className="flag">🌿</span> Lingua Nest
+          </div>
+          <div className="subtitle">A cozy corner for learning languages, one deck at a time.</div>
+        </div>
+        <UserButton afterSignOutUrl="/" />
       </div>
-      <div className="subtitle">A cozy corner for learning languages, one deck at a time.</div>
 
       {!settings ? (
         <StyleSelector initial={[]} onSave={saveStyles} />
