@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { turso } from '../lib/turso';
+import { turso } from '../lib/db/turso';
 import type { ConversationPrompt } from '../types';
 
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
