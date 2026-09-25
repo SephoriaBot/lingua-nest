@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { turso } from './lib/db/turso';
 import type { Language, LearningStyle, UserSettings } from './types';
 import StyleSelector from './components/StyleSelector';
@@ -6,21 +7,20 @@ import LanguageSwitcher from './components/LanguageSwitcher';
 import Flashcards from './components/Flashcards';
 import GrammarNotes from './components/GrammarNotes';
 import ConversationPractice from './components/ConversationPractice';
-import { useUser } from '@clerk/clerk-react';
 
 type Mode = LearningStyle;
 
 export default function App() {
   const { user, isLoaded } = useUser();
   const userId = user?.id;
+
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('flashcards');
-if (!isLoaded) return null;
-if (!userId) return <SignInPrompt />; // or Clerk's <SignIn /> component
-  
+
   useEffect(() => {
+    if (!userId) return;
     (async () => {
       const langsRes = await turso.execute('select * from languages order by sort_order');
       setLanguages(langsRes.rows as unknown as Language[]);
@@ -39,9 +39,10 @@ if (!userId) return <SignInPrompt />; // or Clerk's <SignIn /> component
       }
       setLoading(false);
     })();
-  }, []);
+  }, [userId]);
 
   async function saveStyles(styles: LearningStyle[]) {
+    if (!userId) return;
     const activeLanguage = settings?.active_language_id ?? languages[0]?.id ?? 'es';
     await turso.execute({
       sql: `insert into user_settings (user_id, active_language_id, learning_styles, updated_at)
@@ -61,12 +62,28 @@ if (!userId) return <SignInPrompt />; // or Clerk's <SignIn /> component
   }
 
   async function setActiveLanguage(id: string) {
-    if (!settings) return;
+    if (!settings || !userId) return;
     await turso.execute({
       sql: 'update user_settings set active_language_id = ? where user_id = ?',
       args: [id, userId],
     });
     setSettings({ ...settings, active_language_id: id });
+  }
+
+  // Wait for Clerk to finish checking the session before deciding what to show.
+  if (!isLoaded) return null;
+
+  // Not signed in — swap this for Clerk's <SignIn /> component whenever you
+  // wire up a real sign-in page; a plain message is enough to unblock the build.
+  if (!userId) {
+    return (
+      <div className="app-shell">
+        <div className="brand">
+          <span className="flag">🌿</span> Lingua Nest
+        </div>
+        <p>Please sign in to continue.</p>
+      </div>
+    );
   }
 
   if (loading) return null;
