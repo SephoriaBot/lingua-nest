@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { turso } from '../lib/db/turso';
+import SpeakButton from './SpeakButton';
 import type { GrammarNote } from '../types';
 
 // Row shape as it comes back from libSQL before we parse the JSON `examples` column.
@@ -47,7 +48,10 @@ export default function GrammarNotes({
           <p>{note.explanation}</p>
           {note.examples.map((ex, i) => (
             <div key={i} className="grammar-example">
-              <div>{ex.target}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {ex.target}
+                <SpeakButton text={ex.target} languageId={languageId} />
+              </div>
               <div className="eng">{ex.english}</div>
             </div>
           ))}
