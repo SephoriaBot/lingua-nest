@@ -5,14 +5,20 @@ import type { GrammarNote } from '../types';
 // Row shape as it comes back from libSQL before we parse the JSON `examples` column.
 type GrammarRow = Omit<GrammarNote, 'examples'> & { examples: string };
 
-export default function GrammarNotes({ languageId }: { languageId: string }) {
+export default function GrammarNotes({
+  languageId,
+  unlockedDay,
+}: {
+  languageId: string;
+  unlockedDay: number;
+}) {
   const [notes, setNotes] = useState<GrammarNote[]>([]);
 
   useEffect(() => {
     turso
       .execute({
-        sql: 'select * from grammar_notes where language_id = ? order by sort_order',
-        args: [languageId],
+        sql: 'select * from grammar_notes where language_id = ? and sort_order <= ? order by sort_order',
+        args: [languageId, unlockedDay],
       })
       .then((res) => {
         const rows = res.rows as unknown as GrammarRow[];
@@ -23,7 +29,7 @@ export default function GrammarNotes({ languageId }: { languageId: string }) {
           }))
         );
       });
-  }, [languageId]);
+  }, [languageId, unlockedDay]);
 
   if (notes.length === 0) {
     return (
