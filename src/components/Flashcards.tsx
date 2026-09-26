@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { turso } from '../lib/db/turso';
+import SpeakButton from './SpeakButton';
 import type { Deck, Card } from '../types';
 
 export default function Flashcards({
@@ -89,10 +90,16 @@ export default function Flashcards({
       {card ? (
         <>
           <div className="flashcard" onClick={() => setRevealed((r) => !r)}>
-            <div className="front">{revealed ? card.back : card.front}</div>
+            <div className="front" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {revealed ? card.back : card.front}
+              <SpeakButton text={card.front} languageId={languageId} />
+            </div>
             {revealed && card.example_sentence && (
               <div className="example">
-                {card.example_sentence}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  {card.example_sentence}
+                  <SpeakButton text={card.example_sentence} languageId={languageId} />
+                </span>
                 <br />
                 {card.example_translation}
               </div>
