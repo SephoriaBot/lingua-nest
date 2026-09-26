@@ -2,6 +2,7 @@
 // Add an entry here whenever a new language is added to the languages table.
 const LANGUAGE_TO_BCP47: Record<string, string> = {
   es: 'es-ES',
+  zh: 'zh-CN',
 };
 
 export function speak(text: string, languageId: string) {
