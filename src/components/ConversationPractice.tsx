@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { turso } from '../lib/db/turso';
+import SpeakButton from './SpeakButton';
 import type { ConversationPrompt } from '../types';
 
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
@@ -87,8 +88,9 @@ export default function ConversationPractice({
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {messages.map((m, i) => (
-          <div key={i} className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`} style={{ display: 'flex' }}>
+          <div key={i} className={`chat-bubble ${m.role === 'assistant' ? 'them' : 'me'}`} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {m.content}
+            {m.role === 'assistant' && <SpeakButton text={m.content} languageId={languageId} />}
           </div>
         ))}
         {sending && <div className="chat-bubble them" style={{ opacity: 0.6 }}>…</div>}
