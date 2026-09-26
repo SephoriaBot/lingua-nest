@@ -4,7 +4,13 @@ import type { ConversationPrompt } from '../types';
 
 interface ChatMsg { role: 'user' | 'assistant'; content: string }
 
-export default function ConversationPractice({ languageId }: { languageId: string }) {
+export default function ConversationPractice({
+  languageId,
+  unlockedDay,
+}: {
+  languageId: string;
+  unlockedDay: number;
+}) {
   const [scenarios, setScenarios] = useState<ConversationPrompt[]>([]);
   const [active, setActive] = useState<ConversationPrompt | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -14,12 +20,12 @@ export default function ConversationPractice({ languageId }: { languageId: strin
   useEffect(() => {
     turso
       .execute({
-        sql: 'select * from conversation_prompts where language_id = ?',
-        args: [languageId],
+        sql: 'select * from conversation_prompts where language_id = ? and sort_order <= ? order by sort_order',
+        args: [languageId, unlockedDay],
       })
       .then((res) => setScenarios(res.rows as unknown as ConversationPrompt[]));
     setActive(null);
-  }, [languageId]);
+  }, [languageId, unlockedDay]);
 
   function startScenario(prompt: ConversationPrompt) {
     setActive(prompt);
