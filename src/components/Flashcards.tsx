@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react';
 import { turso } from '../lib/db/turso';
 import type { Deck, Card } from '../types';
 
-export default function Flashcards({ languageId, userId }: { languageId: string; userId: string }) {
+export default function Flashcards({
+  languageId,
+  userId,
+  unlockedDay,
+}: {
+  languageId: string;
+  userId: string;
+  unlockedDay: number;
+}) {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [activeDeck, setActiveDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
@@ -12,12 +20,12 @@ export default function Flashcards({ languageId, userId }: { languageId: string;
   useEffect(() => {
     turso
       .execute({
-        sql: 'select * from decks where language_id = ? order by sort_order',
-        args: [languageId],
+        sql: 'select * from decks where language_id = ? and sort_order <= ? order by sort_order',
+        args: [languageId, unlockedDay],
       })
       .then((res) => setDecks(res.rows as unknown as Deck[]));
     setActiveDeck(null);
-  }, [languageId]);
+  }, [languageId, unlockedDay]);
 
   async function openDeck(deck: Deck) {
     const res = await turso.execute({
