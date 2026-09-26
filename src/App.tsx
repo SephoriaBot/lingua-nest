@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUser, SignInButton, UserButton } from '@clerk/clerk-react';
 import { turso } from './lib/db/turso';
+import { getUnlockedDay } from './lib/progress';
 import type { Language, LearningStyle, UserSettings } from './types';
 import StyleSelector from './components/StyleSelector';
 import LanguageSwitcher from './components/LanguageSwitcher';
@@ -31,8 +32,17 @@ export default function App() {
       });
       const row = settingsRes.rows[0] as any;
       if (row) {
+        let startedAt = row.started_at as string | null;
+        if (!startedAt) {
+          startedAt = new Date().toISOString();
+          await turso.execute({
+            sql: 'update user_settings set started_at = ? where user_id = ?',
+            args: [startedAt, userId],
+          });
+        }
         setSettings({
           ...row,
+          started_at: startedAt,
           learning_styles: JSON.parse(row.learning_styles || '[]'),
         });
         setMode((JSON.parse(row.learning_styles || '[]')[0] as Mode) ?? 'flashcards');
@@ -44,18 +54,20 @@ export default function App() {
   async function saveStyles(styles: LearningStyle[]) {
     if (!userId) return;
     const activeLanguage = settings?.active_language_id ?? languages[0]?.id ?? 'es';
+    const startedAt = settings?.started_at ?? new Date().toISOString();
     await turso.execute({
-      sql: `insert into user_settings (user_id, active_language_id, learning_styles, updated_at)
-            values (?, ?, ?, ?)
+      sql: `insert into user_settings (user_id, active_language_id, learning_styles, started_at, updated_at)
+            values (?, ?, ?, ?, ?)
             on conflict(user_id) do update set
               learning_styles = excluded.learning_styles,
               updated_at = excluded.updated_at`,
-      args: [userId, activeLanguage, JSON.stringify(styles), new Date().toISOString()],
+      args: [userId, activeLanguage, JSON.stringify(styles), startedAt, new Date().toISOString()],
     });
     setSettings({
       user_id: userId,
       active_language_id: activeLanguage,
       learning_styles: styles,
+      started_at: startedAt,
       updated_at: new Date().toISOString(),
     });
     setMode(styles[0]);
@@ -92,6 +104,7 @@ export default function App() {
   if (loading) return null;
 
   const activeLanguage = languages.find((l) => l.id === settings?.active_language_id) ?? languages[0];
+  const unlockedDay = settings ? getUnlockedDay(settings.started_at) : 1;
 
   return (
     <div className="app-shell">
@@ -134,10 +147,14 @@ export default function App() {
           </div>
 
           {activeLanguage && mode === 'flashcards' && (
-            <Flashcards languageId={activeLanguage.id} userId={userId} />
+            <Flashcards languageId={activeLanguage.id} userId={userId} unlockedDay={unlockedDay} />
           )}
-          {activeLanguage && mode === 'grammar' && <GrammarNotes languageId={activeLanguage.id} />}
-          {activeLanguage && mode === 'conversation' && <ConversationPractice languageId={activeLanguage.id} />}
+          {activeLanguage && mode === 'grammar' && (
+            <GrammarNotes languageId={activeLanguage.id} unlockedDay={unlockedDay} />
+          )}
+          {activeLanguage && mode === 'conversation' && (
+            <ConversationPractice languageId={activeLanguage.id} unlockedDay={unlockedDay} />
+          )}
         </>
       )}
     </div>
