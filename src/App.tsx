@@ -91,7 +91,7 @@ export default function App() {
     return (
       <div className="app-shell">
         <div className="brand">
-          <span className="flag">🌿</span> Lingua Nest
+          <span className="flag">🌿</span> Lingua
         </div>
         <p style={{ marginBottom: 16 }}>Sign in to start learning.</p>
         <SignInButton mode="modal">
@@ -111,7 +111,7 @@ export default function App() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div className="brand">
-            <span className="flag">🌿</span> Lingua Nest
+            <span className="flag">🌿</span> Lingua
           </div>
           <div className="subtitle">A cozy corner for learning languages, one deck at a time.</div>
         </div>
